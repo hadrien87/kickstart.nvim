@@ -162,6 +162,12 @@ vim.opt.scrolloff = 10
 --  See `:help hlsearch`
 vim.keymap.set('n', '<Esc>', '<cmd>nohlsearch<CR>')
 
+-- Navigate vim panes easier
+vim.keymap.set('n', '<c-k>', ':wincmd k<CR>')
+vim.keymap.set('n', '<c-j>', ':wincmd j<CR>')
+vim.keymap.set('n', '<c-h>', ':wincmd h<CR>')
+vim.keymap.set('n', '<c-l>', ':wincmd l<CR>')
+
 -- Diagnostic keymaps
 vim.keymap.set('n', '<leader>q', vim.diagnostic.setloclist, { desc = 'Open diagnostic [Q]uickfix list' })
 
@@ -264,6 +270,15 @@ require('lazy').setup({
     },
   },
 
+  {
+    'prettier/vim-prettier',
+    ft = { 'javascript', 'typescript', 'html', 'css', 'scss', 'json', 'yaml' }, -- File types to format
+    config = function()
+      -- Optional configuration: Enable auto-formatting on save
+      vim.g['prettier#autoformat'] = 1
+    end,
+  },
+
   -- NOTE: Plugins can also be configured to run Lua code when they are loaded.
   --
   -- This is often very useful to both group configuration, as well as handle
@@ -356,97 +371,128 @@ require('lazy').setup({
       'rcarriga/nvim-notify',
     },
   },
-  {
-    'tpope/vim-fugitive',
-    lazy = false, -- Make sure to load it on startup
-  },
+
+--  {
+--    'tpope/vim-fugitive',
+--    lazy = false, -- Make sure to load it on startup
+--  },
 
   {
-    'ThePrimeagen/harpoon',
-    branch = 'harpoon2',
-    dependencies = { 'nvim-lua/plenary.nvim', 'nvim-telescope/telescope.nvim' },
+    'ggandor/leap.nvim',
     config = function()
-      local harpoon = require 'harpoon'
-      harpoon:setup {}
-
-      -- Function to open Harpoon in Telescope
-      local conf = require('telescope.config').values
-      local function toggle_telescope(harpoon_files)
-        local file_paths = {}
-        for _, item in ipairs(harpoon_files.items) do
-          table.insert(file_paths, item.value)
-        end
-
-        require('telescope.pickers')
-          .new({}, {
-            prompt_title = 'Harpoon',
-            finder = require('telescope.finders').new_table {
-              results = file_paths,
-            },
-            previewer = conf.file_previewer {},
-            sorter = conf.generic_sorter {},
-          })
-          :find()
-      end
-
-      -- Keybindings
-      vim.keymap.set('n', '<leader>ha', function()
-        harpoon:list():add()
-      end, { desc = 'Harpoon: Add file' })
-
-      vim.keymap.set('n', '<leader>hh', function()
-        toggle_telescope(harpoon:list())
-      end, { desc = 'Harpoon: Open menu in Telescope' })
-
-      vim.keymap.set('n', '<M-1>', function()
-        harpoon:list():select(1)
-      end, { desc = 'Harpoon: Go to file 1' })
-      vim.keymap.set('n', '<M-2>', function()
-        harpoon:list():select(2)
-      end, { desc = 'Harpoon: Go to file 2' })
-      vim.keymap.set('n', '<M-3>', function()
-        harpoon:list():select(3)
-      end, { desc = 'Harpoon: Go to file 3' })
-      vim.keymap.set('n', '<M-4>', function()
-        harpoon:list():select(4)
-      end, { desc = 'Harpoon: Go to file 4' })
+      local leap = require 'leap'
+      leap.add_default_mappings()
+      leap.opts.case_sensitive = true
     end,
   },
 
-  {
-    'nvim-tree/nvim-tree.lua',
-    version = '*',
-    lazy = false,
-    dependencies = {
-      'nvim-tree/nvim-web-devicons',
+{
+  'stevearc/oil.nvim',
+  opts = {
+    columns = { "icon" }, -- Show icons
+    view_options = {
+      show_hidden = true, -- Show dotfiles
     },
-    config = function()
-      -- Disable netrw at the very start of your init.lua
-      vim.g.loaded_netrw = 1
-      vim.g.loaded_netrwPlugin = 1
-
-      -- Optionally enable 24-bit colour
-      vim.opt.termguicolors = true
-
-      -- Setup with some options
-      require('nvim-tree').setup {
-        sort = {
-          sorter = 'case_sensitive',
-        },
-        view = {
-          width = 30,
-        },
-        renderer = {
-          group_empty = true,
-        },
-        filters = {
-          dotfiles = true,
-        },
-        -- Add any other desired nvim-tree options here
-      }
-    end,
-    vim.keymap.set('n', '<leader>e', ':NvimTreeToggle<CR>', { desc = 'Toggle file explorer' }),
+    float = {
+      max_width = 30,
+      max_height = 20,
+      border = "rounded", -- Nice border style
+      override = function(conf)
+        -- Position in the upper right corner
+        conf.anchor = "NW"
+        conf.row = 1  -- Near the top
+        conf.col = vim.o.columns - conf.width - 2 -- Align to the right
+        return conf
+      end,
+    },
   },
+  keys = {
+    {
+      "<leader>e",
+      function() require("oil").open_float(vim.fn.expand('%:p:h')) end,
+      desc = "Open Oil file explorer in floating window (buffer's directory)"
+    },
+  }
+},
+
+  {
+   'christoomey/vim-tmux-navigator',
+    vim.keymap.set('n', 'C-h', ':TmuxNavigateLeft<CR>'),
+    vim.keymap.set('n', 'C-j', ':TmuxNavigateDown<CR>'),
+    vim.keymap.set('n', 'C-k', ':TmuxNavigateUp<CR>'),
+    vim.keymap.set('n', 'C-l', ':TmuxNavigateRight<CR>'),
+},
+
+--  {
+--    'ThePrimeagen/harpoon',
+--    branch = 'harpoon2',
+--    dependencies = { 'nvim-lua/plenary.nvim', 'nvim-telescope/telescope.nvim' },
+--    config = function()
+--      local harpoon = require 'harpoon'
+--      harpoon:setup {}
+--
+--      -- Keybindings
+--      vim.keymap.set('n', '<leader>ha', function()
+--        harpoon:list():add()
+--      end, { desc = 'Harpoon: Add file' })
+--
+--      vim.keymap.set('n', '<leader>hh', function()
+--        harpoon.ui:toggle_quick_menu(harpoon:list())
+--      end, { desc = 'Harpoon: Open Harpoon' })
+--
+--      vim.keymap.set('n', '<M-1>', function()
+--        harpoon:list():select(1)
+--      end, { desc = 'Harpoon: Go to file 1' })
+--      vim.keymap.set('n', '<M-2>', function()
+--        harpoon:list():select(2)
+--      end, { desc = 'Harpoon: Go to file 2' })
+--      vim.keymap.set('n', '<M-3>', function()
+--        harpoon:list():select(3)
+--      end, { desc = 'Harpoon: Go to file 3' })
+--      vim.keymap.set('n', '<M-4>', function()
+--        harpoon:list():select(4)
+--      end, { desc = 'Harpoon: Go to file 4' })
+--    end,
+--  },
+
+--  {
+--    'nvim-tree/nvim-tree.lua',
+--    version = '*',
+--    lazy = false,
+--    dependencies = {
+--      'nvim-tree/nvim-web-devicons',
+--    },
+--    config = function()
+--      -- Disable netrw at the very start of your init.lua
+--      vim.g.loaded_netrw = 1
+--      vim.g.loaded_netrwPlugin = 1
+--
+--      -- Optionally enable 24-bit colour
+--      vim.opt.termguicolors = true
+--
+--      -- Setup with some options
+--      require('nvim-tree').setup {
+--        sort = {
+--          sorter = 'case_sensitive',
+--        },
+--        view = {
+--          width = 40,
+--        },
+--        renderer = {
+--          group_empty = true,
+--        },
+--        filters = {
+--          dotfiles = true,
+--        },
+--        -- Add any other desired nvim-tree options here
+--        update_focused_file = {
+--          enable = true,
+--          update_cwd = true,
+--        },
+--      }
+--    end,
+--    vim.keymap.set('n', '<leader>x', ':NvimTreeToggle<CR>', { desc = 'Toggle file explorer' }),
+--  },
 
   {
     'pmizio/typescript-tools.nvim',
@@ -855,48 +901,48 @@ require('lazy').setup({
     end,
   },
 
-  { -- Autoformat
-    'stevearc/conform.nvim',
-    event = { 'BufWritePre' },
-    cmd = { 'ConformInfo' },
-    keys = {
-      {
-        '<leader>f',
-        function()
-          require('conform').format { async = true, lsp_format = 'fallback' }
-        end,
-        mode = '',
-        desc = '[F]ormat buffer',
-      },
-    },
-    opts = {
-      notify_on_error = false,
-      format_on_save = function(bufnr)
-        -- Disable "format_on_save lsp_fallback" for languages that don't
-        -- have a well standardized coding style. You can add additional
-        -- languages here or re-enable it for the disabled ones.
-        local disable_filetypes = { c = true, cpp = true }
-        local lsp_format_opt
-        if disable_filetypes[vim.bo[bufnr].filetype] then
-          lsp_format_opt = 'never'
-        else
-          lsp_format_opt = 'fallback'
-        end
-        return {
-          timeout_ms = 500,
-          lsp_format = lsp_format_opt,
-        }
-      end,
-      formatters_by_ft = {
-        lua = { 'stylua' },
-        -- Conform can also run multiple formatters sequentially
-        -- python = { "isort", "black" },
-        --
-        -- You can use 'stop_after_first' to run the first available formatter from the list
-        -- javascript = { "prettierd", "prettier", stop_after_first = true },
-      },
-    },
-  },
+  --  { -- Autoformat
+  --    'stevearc/conform.nvim',
+  --    event = { 'BufWritePre' },
+  --    cmd = { 'ConformInfo' },
+  --    keys = {
+  --      {
+  --        '<leader>f',
+  --        function()
+  --          require('conform').format { async = true, lsp_format = 'fallback' }
+  --        end,
+  --        mode = '',
+  --        desc = '[F]ormat buffer',
+  --      },
+  --    },
+  --    opts = {
+  --      notify_on_error = false,
+  --      format_on_save = function(bufnr)
+  --        -- Disable "format_on_save lsp_fallback" for languages that don't
+  --        -- have a well standardized coding style. You can add additional
+  --        -- languages here or re-enable it for the disabled ones.
+  --        local disable_filetypes = { c = true, cpp = true }
+  --        local lsp_format_opt
+  --        if disable_filetypes[vim.bo[bufnr].filetype] then
+  --          lsp_format_opt = 'never'
+  --        else
+  --          lsp_format_opt = 'fallback'
+  --        end
+  --        return {
+  --          timeout_ms = 500,
+  --          lsp_format = lsp_format_opt,
+  --        }
+  --      end,
+  --      formatters_by_ft = {
+  --        lua = { 'stylua' },
+  --        -- Conform can also run multiple formatters sequentially
+  --        -- python = { "isort", "black" },
+  --        --
+  --        -- You can use 'stop_after_first' to run the first available formatter from the list
+  --        -- javascript = { "prettierd", "prettier", stop_after_first = true },
+  --      },
+  --    },
+  --  },
 
   { -- Autocompletion
     'hrsh7th/nvim-cmp',
@@ -1062,17 +1108,21 @@ require('lazy').setup({
       -- Simple and easy statusline.
       --  You could remove this setup call if you don't like it,
       --  and try some other statusline plugin
-      local statusline = require 'mini.statusline'
-      -- set use_icons to true if you have a Nerd Font
-      statusline.setup { use_icons = vim.g.have_nerd_font }
+local statusline = require 'mini.statusline'
 
-      -- You can configure sections in the statusline by overriding their
-      -- default behavior. For example, here we set the section for
-      -- cursor location to LINE:COLUMN
-      ---@diagnostic disable-next-line: duplicate-set-field
-      statusline.section_location = function()
-        return '%2l:%-2v'
-      end
+statusline.setup {
+  use_icons = vim.g.have_nerd_font,
+}
+
+-- Show mode, filename, git branch, and line number
+statusline.section_active = function()
+  local mode = statusline.section_mode()
+  local filename = statusline.section_filename()
+  local git_branch = statusline.section_git() -- Git branch
+  local location = '%2l' -- Line number only
+
+  return table.concat({ mode, filename, git_branch, location }, ' | ')
+end
 
       -- ... and there is more!
       --  Check out: https://github.com/echasnovski/mini.nvim
@@ -1151,6 +1201,5 @@ require('lazy').setup({
     },
   },
 })
-
 -- The line beneath this is called `modeline`. See `:help modeline`
 -- vim: ts=2 sts=2 sw=2 et
