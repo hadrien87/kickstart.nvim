@@ -108,7 +108,9 @@ vim.opt.mouse = 'a'
 
 -- Don't show the mode, since it's already in the status line
 vim.opt.showmode = false
-
+-- Disable netrw so you can use a custom dashboard such as nvimdev/dashboard-nvim
+vim.g.loaded_netrw = 1
+vim.g.loaded_netrwPlugin = 1
 -- Sync clipboard between OS and Neovim.
 --  Schedule the setting after `UiEnter` because it can increase startup-time.
 --  Remove this option if you want your OS clipboard to remain independent.
@@ -230,6 +232,7 @@ vim.opt.rtp:prepend(lazypath)
 --  To update plugins you can run
 --    :Lazy update
 --
+
 -- NOTE: Here is where you install your plugins.
 require('lazy').setup({
   -- NOTE: Plugins can be added with a link (or for a github repo: 'owner/repo' link).
@@ -270,14 +273,21 @@ require('lazy').setup({
     },
   },
 
-  {
-    'prettier/vim-prettier',
-    ft = { 'javascript', 'typescript', 'html', 'css', 'scss', 'json', 'yaml' }, -- File types to format
-    config = function()
-      -- Optional configuration: Enable auto-formatting on save
-      vim.g['prettier#autoformat'] = 1
-    end,
-  },
+{
+  'prettier/vim-prettier',
+  lazy = false,
+  build = function()
+    if vim.fn.executable("prettier") == 0 then
+      vim.cmd("!npm install")
+    end
+  end,
+  ft = { 'javascript', 'typescript', 'html', 'css', 'scss', 'json', 'yaml' },
+  config = function()
+    vim.g['prettier#autoformat'] = 1
+    vim.g['prettier#autoformat_config_present'] = 1 -- Only autoformat if .prettierrc exists
+    vim.g['prettier#autoformat_require_pragma'] = 0 -- Format all files, not just those with a pragma
+  end,
+},
 
   -- NOTE: Plugins can also be configured to run Lua code when they are loaded.
   --
@@ -371,12 +381,31 @@ require('lazy').setup({
       'rcarriga/nvim-notify',
     },
   },
-
---  {
---    'tpope/vim-fugitive',
---    lazy = false, -- Make sure to load it on startup
---  },
-
+-- nvim v0.8.0
+{
+    "kdheepak/lazygit.nvim",
+    lazy = false,
+    cmd = {
+        "LazyGit",
+        "LazyGitConfig",
+        "LazyGitCurrentFile",
+        "LazyGitFilter",
+        "LazyGitFilterCurrentFile",
+    },
+    -- optional for floating window border decoration
+    dependencies = {
+        "nvim-telescope/telescope.nvim",
+        "nvim-lua/plenary.nvim",
+    },
+    -- setting the keybinding for LazyGit with 'keys' is recommended in
+    -- order to load the plugin when the command is run for the first time
+    keys = {
+        { "<leader>lg", "<cmd>LazyGit<cr>", desc = "LazyGit" }
+    },
+    config = function()
+        require("telescope").load_extension("lazygit")
+    end,
+},
   {
     'ggandor/leap.nvim',
     config = function()
@@ -385,7 +414,38 @@ require('lazy').setup({
       leap.opts.case_sensitive = true
     end,
   },
-
+{
+  'nvimdev/dashboard-nvim',
+  event = 'VimEnter',
+  config = function()
+    require('dashboard').setup {
+      theme = "doom",
+      config = {
+        center = {  -- Buttons / Quick Actions
+          { icon = '  ', desc = 'Find File', action = 'Telescope find_files', key = 'f' },
+          { icon = '  ', desc = 'Find Neovim Files', action = 'Telescope find_files cwd=~/.config/nvim', key = 'n' },
+          { icon = '  ', desc = 'Recent Files', action = 'Telescope oldfiles', key = 'r' },
+          { icon = '  ', desc = 'Bookmarks', action = 'Telescope marks', key = 'm' },
+          { icon = '  ', desc = 'Update Plugins', action = 'Lazy sync', key = 'u' },
+          { icon = '  ', desc = 'Quit', action = 'qa', key = 'q' },
+        },
+        footer = { "🚀 Kickstart your coding session!" } -- Optional Footer
+      }
+    }
+  end,
+  dependencies = { {'nvim-tree/nvim-web-devicons'} }
+},
+  {
+    'nvim-lualine/lualine.nvim',
+    dependencies = { 'nvim-tree/nvim-web-devicons' },
+    config = function()
+      require('lualine').setup {
+        options = {
+          theme = "dracula"
+        }
+      }
+    end,
+  },
 {
   'stevearc/oil.nvim',
   opts = {
@@ -394,8 +454,9 @@ require('lazy').setup({
       show_hidden = true, -- Show dotfiles
     },
     float = {
-      max_width = 30,
-      max_height = 20,
+      padding = 2,
+      max_width = 40,
+      max_height = 30,
       border = "rounded", -- Nice border style
       override = function(conf)
         -- Position in the upper right corner
@@ -836,6 +897,7 @@ require('lazy').setup({
       --  - settings (table): Override the default settings passed when initializing the server.
       --        For example, to see the options for `lua_ls`, you could go to: https://luals.github.io/wiki/settings/
       local servers = {
+        tailwindcss = {},
         -- clangd = {},
         -- gopls = {},
         -- pyright = {},
@@ -1105,25 +1167,25 @@ require('lazy').setup({
       -- - sr)'  - [S]urround [R]eplace [)] [']
       require('mini.surround').setup()
 
-      -- Simple and easy statusline.
-      --  You could remove this setup call if you don't like it,
-      --  and try some other statusline plugin
-local statusline = require 'mini.statusline'
-
-statusline.setup {
-  use_icons = vim.g.have_nerd_font,
-}
-
--- Show mode, filename, git branch, and line number
-statusline.section_active = function()
-  local mode = statusline.section_mode()
-  local filename = statusline.section_filename()
-  local git_branch = statusline.section_git() -- Git branch
-  local location = '%2l' -- Line number only
-
-  return table.concat({ mode, filename, git_branch, location }, ' | ')
-end
-
+--       -- Simple and easy statusline.
+--       --  You could remove this setup call if you don't like it,
+--       --  and try some other statusline plugin
+-- local statusline = require 'mini.statusline'
+--
+-- statusline.setup {
+--   use_icons = vim.g.have_nerd_font,
+-- }
+--
+-- -- Show mode, filename, git branch, and line number
+-- statusline.section_active = function()
+--   local mode = statusline.section_mode()
+--   local filename = statusline.section_filename()
+--   local git_branch = statusline.section_git() -- Git branch
+--   local location = '%2l' -- Line number only
+--
+--   return table.concat({ mode, filename, git_branch, location }, ' | ')
+-- end
+--
       -- ... and there is more!
       --  Check out: https://github.com/echasnovski/mini.nvim
     end,
