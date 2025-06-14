@@ -273,22 +273,51 @@ require('lazy').setup({
     },
   },
 
-{
-  'prettier/vim-prettier',
-  lazy = false,
-  build = function()
-    if vim.fn.executable("prettier") == 0 then
-      vim.cmd("!npm install")
-    end
-  end,
-  ft = { 'javascript', 'typescript', 'html', 'css', 'scss', 'json', 'yaml' },
-  config = function()
-    vim.g['prettier#autoformat'] = 1
-    vim.g['prettier#autoformat_config_present'] = 1 -- Only autoformat if .prettierrc exists
-    vim.g['prettier#autoformat_require_pragma'] = 0 -- Format all files, not just those with a pragma
-  end,
-},
-
+  {
+    'stevearc/conform.nvim',
+    event = { 'BufWritePre' },
+    cmd = { 'ConformInfo' },
+    keys = {
+      {
+        '<Leader>p',
+        function()
+          require('conform').format { async = true, lsp_format = 'fallback' }
+        end,
+        mode = '',
+        desc = '[F]ormat buffer',
+      },
+    },
+    opts = {
+      notify_on_error = false,
+      format_on_save = function(bufnr)
+        -- Disable "format_on_save lsp_fallback" for languages that don't
+        -- have a well standardized coding style. You can add additional
+        -- languages here or re-enable it for the disabled ones.
+        local disable_filetypes = { c = true, cpp = true }
+        if disable_filetypes[vim.bo[bufnr].filetype] then
+          return nil
+        else
+          return {
+            timeout_ms = 500,
+            lsp_format = 'fallback',
+          }
+        end
+      end,
+      formatters_by_ft = {
+        lua = { 'stylua' },
+        -- Conform can also run multiple formatters sequentially
+        -- python = { "isort", "black" },
+        --
+        -- You can use 'stop_after_first' to run the first available formatter from the list
+        javascript = { 'prettierd', stop_after_first = true },
+        javascriptreact = { 'prettierd', stop_after_first = true },
+        typescript = { 'prettierd', stop_after_first = true },
+        typescriptreact = { 'prettierd', stop_after_first = true },
+        json = { 'prettierd', stop_after_first = true },
+        markdown = { 'prettierd', stop_after_first = true },
+      },
+    },
+  },
   -- NOTE: Plugins can also be configured to run Lua code when they are loaded.
   --
   -- This is often very useful to both group configuration, as well as handle
@@ -359,7 +388,11 @@ require('lazy').setup({
       },
     },
   },
-
+  {
+    'lukas-reineke/indent-blankline.nvim',
+    main = 'ibl',
+    opts = {},
+  },
   -- NOTE: Plugins can specify dependencies.
   --
   -- The dependencies are proper plugin specifications as well - anything
@@ -381,31 +414,31 @@ require('lazy').setup({
       'rcarriga/nvim-notify',
     },
   },
--- nvim v0.8.0
-{
-    "kdheepak/lazygit.nvim",
+  -- nvim v0.8.0
+  {
+    'kdheepak/lazygit.nvim',
     lazy = false,
     cmd = {
-        "LazyGit",
-        "LazyGitConfig",
-        "LazyGitCurrentFile",
-        "LazyGitFilter",
-        "LazyGitFilterCurrentFile",
+      'LazyGit',
+      'LazyGitConfig',
+      'LazyGitCurrentFile',
+      'LazyGitFilter',
+      'LazyGitFilterCurrentFile',
     },
     -- optional for floating window border decoration
     dependencies = {
-        "nvim-telescope/telescope.nvim",
-        "nvim-lua/plenary.nvim",
+      'nvim-telescope/telescope.nvim',
+      'nvim-lua/plenary.nvim',
     },
     -- setting the keybinding for LazyGit with 'keys' is recommended in
     -- order to load the plugin when the command is run for the first time
     keys = {
-        { "<leader>lg", "<cmd>LazyGit<cr>", desc = "LazyGit" }
+      { '<leader>lg', '<cmd>LazyGit<cr>', desc = 'LazyGit' },
     },
     config = function()
-        require("telescope").load_extension("lazygit")
+      require('telescope').load_extension 'lazygit'
     end,
-},
+  },
   {
     'ggandor/leap.nvim',
     config = function()
@@ -414,146 +447,148 @@ require('lazy').setup({
       leap.opts.case_sensitive = true
     end,
   },
-{
-  'nvimdev/dashboard-nvim',
-  event = 'VimEnter',
-  config = function()
-    require('dashboard').setup {
-      theme = "doom",
-      config = {
-        center = {  -- Buttons / Quick Actions
-          { icon = '  ', desc = 'Find File', action = 'Telescope find_files', key = 'f' },
-          { icon = '  ', desc = 'Find Neovim Files', action = 'Telescope find_files cwd=~/.config/nvim', key = 'n' },
-          { icon = '  ', desc = 'Recent Files', action = 'Telescope oldfiles', key = 'r' },
-          { icon = '  ', desc = 'Bookmarks', action = 'Telescope marks', key = 'm' },
-          { icon = '  ', desc = 'Update Plugins', action = 'Lazy sync', key = 'u' },
-          { icon = '  ', desc = 'Quit', action = 'qa', key = 'q' },
+  {
+    'nvimdev/dashboard-nvim',
+    event = 'VimEnter',
+    config = function()
+      require('dashboard').setup {
+        theme = 'doom',
+        config = {
+          center = { -- Buttons / Quick Actions
+            { icon = '  ', desc = 'Find File', action = 'Telescope find_files', key = 'f' },
+            { icon = '  ', desc = 'Find Neovim Files', action = 'Telescope find_files cwd=~/.config/nvim', key = 'n' },
+            { icon = '  ', desc = 'Recent Files', action = 'Telescope oldfiles', key = 'r' },
+            { icon = '  ', desc = 'Bookmarks', action = 'Telescope marks', key = 'm' },
+            { icon = '  ', desc = 'Update Plugins', action = 'Lazy sync', key = 'u' },
+            { icon = '  ', desc = 'Quit', action = 'qa', key = 'q' },
+          },
+          footer = { '🚀 Kickstart your coding session!' }, -- Optional Footer
         },
-        footer = { "🚀 Kickstart your coding session!" } -- Optional Footer
       }
-    }
-  end,
-  dependencies = { {'nvim-tree/nvim-web-devicons'} }
-},
+    end,
+    dependencies = { { 'nvim-tree/nvim-web-devicons' } },
+  },
   {
     'nvim-lualine/lualine.nvim',
     dependencies = { 'nvim-tree/nvim-web-devicons' },
     config = function()
       require('lualine').setup {
         options = {
-          theme = "dracula"
-        }
+          theme = 'dracula',
+        },
       }
     end,
   },
-{
-  'stevearc/oil.nvim',
-  opts = {
-    columns = { "icon" }, -- Show icons
-    view_options = {
-      show_hidden = true, -- Show dotfiles
+  {
+    'stevearc/oil.nvim',
+    opts = {
+      columns = { 'icon' }, -- Show icons
+      view_options = {
+        show_hidden = true, -- Show dotfiles
+      },
+      float = {
+        padding = 2,
+        max_width = 40,
+        max_height = 30,
+        border = 'rounded', -- Nice border style
+        override = function(conf)
+          -- Position in the upper right corner
+          conf.anchor = 'NW'
+          conf.row = 1 -- Near the top
+          conf.col = vim.o.columns - conf.width - 2 -- Align to the right
+          return conf
+        end,
+      },
     },
-    float = {
-      padding = 2,
-      max_width = 40,
-      max_height = 30,
-      border = "rounded", -- Nice border style
-      override = function(conf)
-        -- Position in the upper right corner
-        conf.anchor = "NW"
-        conf.row = 1  -- Near the top
-        conf.col = vim.o.columns - conf.width - 2 -- Align to the right
-        return conf
-      end,
+    keys = {
+      {
+        '<leader>e',
+        function()
+          require('oil').open_float(vim.fn.expand '%:p:h')
+        end,
+        desc = "Open Oil file explorer in floating window (buffer's directory)",
+      },
     },
   },
-  keys = {
-    {
-      "<leader>e",
-      function() require("oil").open_float(vim.fn.expand('%:p:h')) end,
-      desc = "Open Oil file explorer in floating window (buffer's directory)"
-    },
-  }
-},
 
   {
-   'christoomey/vim-tmux-navigator',
+    'christoomey/vim-tmux-navigator',
     vim.keymap.set('n', 'C-h', ':TmuxNavigateLeft<CR>'),
     vim.keymap.set('n', 'C-j', ':TmuxNavigateDown<CR>'),
     vim.keymap.set('n', 'C-k', ':TmuxNavigateUp<CR>'),
     vim.keymap.set('n', 'C-l', ':TmuxNavigateRight<CR>'),
-},
+  },
 
---  {
---    'ThePrimeagen/harpoon',
---    branch = 'harpoon2',
---    dependencies = { 'nvim-lua/plenary.nvim', 'nvim-telescope/telescope.nvim' },
---    config = function()
---      local harpoon = require 'harpoon'
---      harpoon:setup {}
---
---      -- Keybindings
---      vim.keymap.set('n', '<leader>ha', function()
---        harpoon:list():add()
---      end, { desc = 'Harpoon: Add file' })
---
---      vim.keymap.set('n', '<leader>hh', function()
---        harpoon.ui:toggle_quick_menu(harpoon:list())
---      end, { desc = 'Harpoon: Open Harpoon' })
---
---      vim.keymap.set('n', '<M-1>', function()
---        harpoon:list():select(1)
---      end, { desc = 'Harpoon: Go to file 1' })
---      vim.keymap.set('n', '<M-2>', function()
---        harpoon:list():select(2)
---      end, { desc = 'Harpoon: Go to file 2' })
---      vim.keymap.set('n', '<M-3>', function()
---        harpoon:list():select(3)
---      end, { desc = 'Harpoon: Go to file 3' })
---      vim.keymap.set('n', '<M-4>', function()
---        harpoon:list():select(4)
---      end, { desc = 'Harpoon: Go to file 4' })
---    end,
---  },
+  --  {
+  --    'ThePrimeagen/harpoon',
+  --    branch = 'harpoon2',
+  --    dependencies = { 'nvim-lua/plenary.nvim', 'nvim-telescope/telescope.nvim' },
+  --    config = function()
+  --      local harpoon = require 'harpoon'
+  --      harpoon:setup {}
+  --
+  --      -- Keybindings
+  --      vim.keymap.set('n', '<leader>ha', function()
+  --        harpoon:list():add()
+  --      end, { desc = 'Harpoon: Add file' })
+  --
+  --      vim.keymap.set('n', '<leader>hh', function()
+  --        harpoon.ui:toggle_quick_menu(harpoon:list())
+  --      end, { desc = 'Harpoon: Open Harpoon' })
+  --
+  --      vim.keymap.set('n', '<M-1>', function()
+  --        harpoon:list():select(1)
+  --      end, { desc = 'Harpoon: Go to file 1' })
+  --      vim.keymap.set('n', '<M-2>', function()
+  --        harpoon:list():select(2)
+  --      end, { desc = 'Harpoon: Go to file 2' })
+  --      vim.keymap.set('n', '<M-3>', function()
+  --        harpoon:list():select(3)
+  --      end, { desc = 'Harpoon: Go to file 3' })
+  --      vim.keymap.set('n', '<M-4>', function()
+  --        harpoon:list():select(4)
+  --      end, { desc = 'Harpoon: Go to file 4' })
+  --    end,
+  --  },
 
---  {
---    'nvim-tree/nvim-tree.lua',
---    version = '*',
---    lazy = false,
---    dependencies = {
---      'nvim-tree/nvim-web-devicons',
---    },
---    config = function()
---      -- Disable netrw at the very start of your init.lua
---      vim.g.loaded_netrw = 1
---      vim.g.loaded_netrwPlugin = 1
---
---      -- Optionally enable 24-bit colour
---      vim.opt.termguicolors = true
---
---      -- Setup with some options
---      require('nvim-tree').setup {
---        sort = {
---          sorter = 'case_sensitive',
---        },
---        view = {
---          width = 40,
---        },
---        renderer = {
---          group_empty = true,
---        },
---        filters = {
---          dotfiles = true,
---        },
---        -- Add any other desired nvim-tree options here
---        update_focused_file = {
---          enable = true,
---          update_cwd = true,
---        },
---      }
---    end,
---    vim.keymap.set('n', '<leader>x', ':NvimTreeToggle<CR>', { desc = 'Toggle file explorer' }),
---  },
+  --  {
+  --    'nvim-tree/nvim-tree.lua',
+  --    version = '*',
+  --    lazy = false,
+  --    dependencies = {
+  --      'nvim-tree/nvim-web-devicons',
+  --    },
+  --    config = function()
+  --      -- Disable netrw at the very start of your init.lua
+  --      vim.g.loaded_netrw = 1
+  --      vim.g.loaded_netrwPlugin = 1
+  --
+  --      -- Optionally enable 24-bit colour
+  --      vim.opt.termguicolors = true
+  --
+  --      -- Setup with some options
+  --      require('nvim-tree').setup {
+  --        sort = {
+  --          sorter = 'case_sensitive',
+  --        },
+  --        view = {
+  --          width = 40,
+  --        },
+  --        renderer = {
+  --          group_empty = true,
+  --        },
+  --        filters = {
+  --          dotfiles = true,
+  --        },
+  --        -- Add any other desired nvim-tree options here
+  --        update_focused_file = {
+  --          enable = true,
+  --          update_cwd = true,
+  --        },
+  --      }
+  --    end,
+  --    vim.keymap.set('n', '<leader>x', ':NvimTreeToggle<CR>', { desc = 'Toggle file explorer' }),
+  --  },
 
   {
     'pmizio/typescript-tools.nvim',
@@ -764,6 +799,19 @@ require('lazy').setup({
           --  This is where a variable was first declared, or where a function is defined, etc.
           --  To jump back, press <C-t>.
           map('gd', require('telescope.builtin').lsp_definitions, '[G]oto [D]efinition')
+
+          -- vertical version of gd
+          map('gy', function()
+            vim.lsp.buf_request(0, 'textDocument/definition', vim.lsp.util.make_position_params(), function(_, result, ctx)
+              if not result or vim.tbl_isempty(result) then
+                vim.notify('[LSP] Definition not found', vim.log.levels.WARN)
+                return
+              end
+
+              vim.cmd 'vsplit'
+              vim.lsp.util.show_document(result[1] or result, 'utf-8', { focus = true })
+            end)
+          end, '[G]oto [Y]Definition in vertical split')
 
           -- Find references for the word under your cursor.
           map('gr', require('telescope.builtin').lsp_references, '[G]oto [R]eferences')
@@ -1167,25 +1215,25 @@ require('lazy').setup({
       -- - sr)'  - [S]urround [R]eplace [)] [']
       require('mini.surround').setup()
 
---       -- Simple and easy statusline.
---       --  You could remove this setup call if you don't like it,
---       --  and try some other statusline plugin
--- local statusline = require 'mini.statusline'
---
--- statusline.setup {
---   use_icons = vim.g.have_nerd_font,
--- }
---
--- -- Show mode, filename, git branch, and line number
--- statusline.section_active = function()
---   local mode = statusline.section_mode()
---   local filename = statusline.section_filename()
---   local git_branch = statusline.section_git() -- Git branch
---   local location = '%2l' -- Line number only
---
---   return table.concat({ mode, filename, git_branch, location }, ' | ')
--- end
---
+      --       -- Simple and easy statusline.
+      --       --  You could remove this setup call if you don't like it,
+      --       --  and try some other statusline plugin
+      -- local statusline = require 'mini.statusline'
+      --
+      -- statusline.setup {
+      --   use_icons = vim.g.have_nerd_font,
+      -- }
+      --
+      -- -- Show mode, filename, git branch, and line number
+      -- statusline.section_active = function()
+      --   local mode = statusline.section_mode()
+      --   local filename = statusline.section_filename()
+      --   local git_branch = statusline.section_git() -- Git branch
+      --   local location = '%2l' -- Line number only
+      --
+      --   return table.concat({ mode, filename, git_branch, location }, ' | ')
+      -- end
+      --
       -- ... and there is more!
       --  Check out: https://github.com/echasnovski/mini.nvim
     end,
@@ -1265,3 +1313,13 @@ require('lazy').setup({
 })
 -- The line beneath this is called `modeline`. See `:help modeline`
 -- vim: ts=2 sts=2 sw=2 et
+
+-- Retrieve last edited line when opening file
+vim.api.nvim_create_autocmd('BufReadPost', {
+  callback = function()
+    local mark = vim.fn.line [['"]]
+    if mark > 1 and mark <= vim.fn.line '$' then
+      vim.cmd [[normal! g`"]]
+    end
+  end,
+})
