@@ -1,32 +1,49 @@
--- lua/custom/keymaps.lua
+-- a/custom/keymaps.lua
 -- Centralized keymaps for Neovim
 local keymap = vim.keymap
 
 -- -------------------------
 -- General keymaps
 -- -------------------------
+
 -- Clear highlights on search
 keymap.set('n', '<Esc>', '<cmd>nohlsearch<CR>')
 
--- Diagnostic keymaps
-vim.keymap.set('n', '<leader>q', function()
+-- Generic copen toggle (Works for BOTH Telescope and Diagnostics)
+keymap.set('n', '<leader>cc', function()
   local qf_open = false
-
-  -- check if any window is a quickfix
   for _, win in ipairs(vim.fn.getwininfo()) do
-    if win['quickfix'] == 1 then
+    if win.quickfix == 1 then
       qf_open = true
       break
     end
   end
-
   if qf_open then
-    vim.cmd 'cclose' -- close if already open
+    vim.cmd.cclose()
   else
-    vim.diagnostic.setqflist() -- always update quickfix list
-    vim.cmd 'copen' -- open quickfix
+    vim.cmd.copen()
   end
-end, { desc = 'Toggle diagnostic [Q]uickfix list' })
+end, { desc = 'Toggle [C]ommand [C]enter (Quickfix)' })
+
+-- Save only if modified
+keymap.set('n', '<leader>w', function()
+  if vim.bo.modified then
+    vim.cmd.write()
+    print '💾 File saved'
+  else
+    print 'No changes to save'
+  end
+end, { desc = 'Save file if modified' })
+
+-- Quit safely
+keymap.set('n', '<leader>q', function()
+  local ok = pcall(function()
+    vim.cmd.quit()
+  end)
+  if not ok then
+    print 'Nothing to quit'
+  end
+end, { desc = 'Quit window safely' })
 
 -- Exit terminal mode
 keymap.set('t', '<Esc><Esc>', '<C-\\><C-n>', { desc = 'Exit terminal mode' })
@@ -35,16 +52,19 @@ keymap.set('t', '<Esc><Esc>', '<C-\\><C-n>', { desc = 'Exit terminal mode' })
 keymap.set('n', '<C-w>h', ':split<CR>', { desc = 'Split window horizontally' })
 keymap.set('n', '<C-w>v', ':vsplit<CR>', { desc = 'Split window vertically' })
 
+-- Faster window resizing
+keymap.set('n', '<C-w>>', '25<C-w>>', { noremap = true, silent = true })
+keymap.set('n', '<C-w><', '25<C-w><', { noremap = true, silent = true })
+keymap.set('n', '<C-w>+', '25<C-w>+', { noremap = true, silent = true })
+keymap.set('n', '<C-w>-', '25<C-w>-', { noremap = true, silent = true })
+
 -- -------------------------
 -- WezTerm Integration
 -- -------------------------
 if vim.env.WEZTERM_PANE then
-  -- Set the IS_NVIM variable for WezTerm
+  -- Mark that we're inside Neovim for WezTerm
   vim.fn.system 'wezterm cli set-user-var IS_NVIM true'
-
-  -- Clear the variable on exit
   vim.api.nvim_create_autocmd('VimLeave', {
-    pattern = '*',
     callback = function()
       vim.fn.system 'wezterm cli set-user-var IS_NVIM false'
     end,
@@ -76,7 +96,7 @@ if vim.env.WEZTERM_PANE then
   -- -------------------------
   -- Smart-splits & resize integration
   -- -------------------------
-  local smart_splits = nil
+  local smart_splits
   local function get_smart_splits()
     if not smart_splits then
       local ok, module = pcall(require, 'smart-splits')
@@ -109,8 +129,11 @@ if vim.env.WEZTERM_PANE then
 
     -- Fallback to WezTerm if window didn't resize
     if initial_width == new_width and initial_height == new_height then
-      local wezterm_direction = ({ left = 'Left', right = 'Right', up = 'Up', down = 'Down' })[direction]
-      vim.fn.system("wezterm cli emit 'resize-pane' --payload '" .. wezterm_direction .. ",3'")
+      local directions = { left = 'Left', right = 'Right', up = 'Up', down = 'Down' }
+      local wezterm_dir = directions[direction]
+      if wezterm_dir then
+        vim.fn.system("wezterm cli emit 'resize-pane' --payload '" .. wezterm_dir .. ",3'")
+      end
     end
   end
 
