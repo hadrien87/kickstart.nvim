@@ -1,14 +1,11 @@
 return {
   {
     'zbirenbaum/copilot.lua',
-    cmd = 'Copilot',
-    event = 'InsertEnter',
     config = function()
       require('copilot').setup {
-        suggestion = { enabled = false },
+        suggestion = { enabled = true, auto_trigger = true }, -- auto_trigger is recommended
         panel = { enabled = false },
         filetypes = { ['*'] = true },
-        copilot_node_command = 'node',
       }
     end,
   },

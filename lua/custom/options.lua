@@ -18,6 +18,14 @@ vim.schedule(function()
   opt.clipboard = 'unnamedplus'
 end)
 
+-- Indentation
+opt.autoindent = true
+
+opt.expandtab = true -- Use spaces instead of tabs
+opt.shiftwidth = 2 -- 1 indent level = 2 spaces (Standard for React/TS)
+opt.tabstop = 2 -- A TAB character looks like 2 spaces
+opt.softtabstop = 2 -- Pressing Tab inserts 2 spaces
+
 -- Break indent
 opt.breakindent = true
 
