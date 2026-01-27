@@ -13,29 +13,23 @@ return {
             {
               'branch',
               icon = '',
+              -- 1. This condition hides the branch if more than 1 window exists
+              cond = function()
+                return #vim.api.nvim_tabpage_list_wins(0) == 1
+              end,
+              -- 2. Simplified fmt: We don't need to check for splits here anymore
               fmt = function(str)
-                -- Check if there’s more than one window open (split)
-                local wins = vim.api.nvim_tabpage_list_wins(0)
-                local is_split = #wins > 1
-
-                -- Shorten branch prefix (e.g. remove "origin/")
-                local name = str:match '[^/]+$' or str
-
-                -- Only truncate if split and name is long
-                if is_split and #name > 25 then
-                  name = name:sub(1, 22) .. '...'
-                end
-
-                return name
+                -- Just clean up the name (e.g. remove "origin/")
+                return str:match '[^/]+$' or str
               end,
             },
             {
               'diagnostics',
               diagnostics_color = {
-                error = { fg = '#BF616A' }, -- nord11 red
-                warn = { fg = '#EBCB8B' }, -- nord12 yellow
-                info = { fg = '#88C0D0' }, -- nord8 cyan
-                hint = { fg = '#EBCB8B' }, -- override hint to nord yellow
+                error = { fg = '#BF616A' },
+                warn = { fg = '#EBCB8B' },
+                info = { fg = '#88C0D0' },
+                hint = { fg = '#EBCB8B' },
               },
             },
             'diff',
@@ -46,7 +40,7 @@ return {
           lualine_z = {
             {
               'filename',
-              path = 0, -- just the filename
+              path = 1,
               fmt = function(name)
                 return name:gsub('%.%w+$', '') -- remove file extension
               end,
