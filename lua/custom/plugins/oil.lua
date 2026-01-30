@@ -2,6 +2,13 @@ return {
   {
     'stevearc/oil.nvim',
     opts = {
+      keymaps = {
+        ['<C-n>'] = 'j',
+        ['<C-p>'] = 'k',
+        ['<C-y>'] = 'actions.select',
+        ['<C-v>'] = 'actions.select_vsplit',
+        ['<C-h>'] = 'actions.select_split',
+      },
       columns = { 'icon' },
       view_options = {
         show_hidden = true,
@@ -13,31 +20,24 @@ return {
         border = 'rounded',
         get_win_title = function(winid)
           local buf = vim.api.nvim_win_get_buf(winid)
-          -- 2. Retrieve the directory properly from the Oil buffer
           local dir = require('oil').get_current_dir(buf)
 
-          -- Fallback if dir is nil (shouldn't happen in Oil)
           if not dir then
             return ''
           end
 
-          -- 3. Find the git root
           local git_root = vim.fs.find('.git', { path = dir, upward = true })[1]
 
           if git_root then
-            -- .git is a folder, so the root is its parent
             local root_dir = vim.fn.fnamemodify(git_root, ':h')
 
-            if dir == root_dir then
-              return vim.fn.fnamemodify(dir, ':t')
+            if dir == root_dir .. '/' then
+              return '/'
             end
 
-            -- Slice the string to remove the root + leading slash
-            -- (+2 accounts for the length of the root string + the slash character)
             return dir:sub(#root_dir + 2)
           end
 
-          -- Fallback for non-git folders
           return vim.fn.fnamemodify(dir, ':~')
         end,
         override = function(conf)
