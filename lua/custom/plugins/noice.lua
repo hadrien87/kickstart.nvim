@@ -59,10 +59,13 @@ return {
       },
     },
     dependencies = {
-      -- if you lazy-load any plugin below, make sure to add proper `module="..."` entries
       'MunifTanjim/nui.nvim',
-      -- nvim-notify is an optional dependency
-      'rcarriga/nvim-notify',
+      {
+        'rcarriga/nvim-notify',
+        opts = {
+          top_down = false, -- bottom-right
+        },
+      },
     },
   },
 }
