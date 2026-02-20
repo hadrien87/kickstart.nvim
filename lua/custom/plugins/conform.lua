@@ -35,10 +35,12 @@ return {
         -- python = { "isort", "black" },
         --
         -- You can use 'stop_after_first' to run the first available formatter from the list
-        javascript = { 'biome', stop_after_first = true },
-        javascriptreact = { 'biome', stop_after_first = true },
-        typescript = { 'biome', stop_after_first = true },
-        typescriptreact = { 'biome', stop_after_first = true },
+        -- Use biome-check (not biome) so format-on-save also applies import/export sorting
+        -- and other safe lint fixes. Plain 'biome' only runs formatting.
+        javascript = { 'biome-check', stop_after_first = true },
+        javascriptreact = { 'biome-check', stop_after_first = true },
+        typescript = { 'biome-check', stop_after_first = true },
+        typescriptreact = { 'biome-check', stop_after_first = true },
         json = { 'biome', stop_after_first = true },
         markdown = { 'biome', stop_after_first = true },
       },
