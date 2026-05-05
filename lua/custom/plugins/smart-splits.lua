@@ -1,22 +1,65 @@
 return {
   {
     'mrjones2014/smart-splits.nvim',
-    config = function()
-      require('smart-splits').setup {
-        default_amount = 5, -- default resize increment
-        resize_mode = {
-          quit_key = '<ESC>', -- how to exit resize mode
-          resize_keys = { 'h', 'j', 'k', 'l' }, -- which keys to use
-          hooks = {
-            on_enter = function()
-              vim.notify('Resize mode ON', vim.log.levels.INFO)
-            end,
-            on_leave = function()
-              vim.notify('Resize mode OFF', vim.log.levels.INFO)
-            end,
-          },
-        },
-      }
-    end,
+    lazy = false,
+    opts = { multiplexer_integration = 'wezterm' },
+    keys = {
+      {
+        '<C-h>',
+        function()
+          require('smart-splits').move_cursor_left()
+        end,
+        desc = 'Navigate left',
+      },
+      {
+        '<C-j>',
+        function()
+          require('smart-splits').move_cursor_down()
+        end,
+        desc = 'Navigate down',
+      },
+      {
+        '<C-k>',
+        function()
+          require('smart-splits').move_cursor_up()
+        end,
+        desc = 'Navigate up',
+      },
+      {
+        '<C-l>',
+        function()
+          require('smart-splits').move_cursor_right()
+        end,
+        desc = 'Navigate right',
+      },
+      {
+        '<M-h>',
+        function()
+          require('smart-splits').resize_left()
+        end,
+        desc = 'Shrink pane horizontally',
+      },
+      {
+        '<M-j>',
+        function()
+          require('smart-splits').resize_down()
+        end,
+        desc = 'Shrink pane vertically',
+      },
+      {
+        '<M-k>',
+        function()
+          require('smart-splits').resize_up()
+        end,
+        desc = 'Grow pane vertically',
+      },
+      {
+        '<M-l>',
+        function()
+          require('smart-splits').resize_right()
+        end,
+        desc = 'Grow pane horizontally',
+      },
+    },
   },
 }
