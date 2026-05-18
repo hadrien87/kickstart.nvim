@@ -2,7 +2,9 @@ return {
   {
     'mrjones2014/smart-splits.nvim',
     lazy = false,
-    opts = { multiplexer_integration = 'wezterm' },
+    opts = {
+      multiplexer_integration = vim.env.TMUX and 'tmux' or 'wezterm',
+    },
     keys = {
       {
         '<C-h>',
